@@ -1,5 +1,7 @@
-import discord
 import logging
+
+import discord
+
 import config
 import verification
 
@@ -11,6 +13,7 @@ discord.utils.setup_logging(handler=log_handler)
 intents = discord.Intents.all()
 
 client = discord.Client(intents=intents)
+verification.set_client(client)
 
 
 @client.event

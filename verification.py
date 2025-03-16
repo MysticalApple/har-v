@@ -1,8 +1,20 @@
 import discord
+
 import config
 
 
-async def welcome(member: discord.Member):
+client = None
+
+
+def set_client(bot_client: discord.Client):
+    global client
+    client = bot_client
+
+
+async def welcome(member: discord.User | discord.Member):
+    if not isinstance(client, discord.Client):
+        raise discord.errors.ClientException
+
     form_url = config.get("form_url") + str(member.id)
     try:
         await member.send(
@@ -12,11 +24,11 @@ async def welcome(member: discord.Member):
         )
 
     except discord.errors.Forbidden:
-        channel = member.guild.get_channel(
+        channel = client.get_channel(
             config.get("user_contact_channel"))
 
         if not isinstance(channel, discord.TextChannel):
-            raise config.InvalidValue
+            raise TypeError
 
         await channel.send(
             f"{member.mention} "
