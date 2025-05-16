@@ -10,5 +10,7 @@ A verification system for a school Discord server.
 
 ## `config.json`
 `form_url`: Full URL to the verification Google Form
+
 `token`: Discord bot token
+
 `user_contact_channel`: ID of Discord channel accessible to unverified users
