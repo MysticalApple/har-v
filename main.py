@@ -5,8 +5,7 @@ import discord
 import config
 import verification
 
-log_handler = logging.FileHandler(
-    filename='bot.log', encoding='utf-8', mode='w')
+log_handler = logging.FileHandler(filename="bot.log", encoding="utf-8", mode="w")
 
 discord.utils.setup_logging(handler=log_handler)
 
@@ -18,7 +17,7 @@ verification.set_client(client)
 
 @client.event
 async def on_ready():
-    print(f'Logged in as {client.user}')
+    print(f"Logged in as {client.user}")
 
 
 @client.event
@@ -28,7 +27,10 @@ async def on_member_join(member: discord.Member):
 
 @client.event
 async def on_message(message: discord.Message):
-    if message.content == "verifyme":
+    if message.content == "verifyme" and message.channel.id == config.get(
+        "user_contact_channel"
+    ):
         await verification.welcome(message.author)
+
 
 client.run(config.get("token"), log_handler=None)

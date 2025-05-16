@@ -24,12 +24,12 @@ async def welcome(member: discord.User | discord.Member):
         )
 
     except discord.errors.Forbidden:
-        channel = client.get_channel(
-            config.get("user_contact_channel"))
+        channel = client.get_channel(config.get("user_contact_channel"))
 
         if not isinstance(channel, discord.TextChannel):
             raise TypeError
 
         await channel.send(
             f"{member.mention} "
-            "Please enable DMs from this server and reply with `verifyme`.")
+            "Please enable DMs from this server and reply with `verifyme`."
+        )
