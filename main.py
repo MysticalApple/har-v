@@ -8,7 +8,6 @@ import verification
 log_handler = logging.FileHandler(filename="bot.log", encoding="utf-8", mode="w")
 log_handler.set_name("discord")
 logger = logging.getLogger("discord")
-
 intents = discord.Intents.all()
 
 client = discord.Client(intents=intents)
@@ -57,7 +56,10 @@ async def on_message(message: discord.Message):
             logger.error("Invalid mod contact channel id.")
             raise discord.ClientException
 
-        await channel.send(f"Message from {message.author.mention}:\n{message.content}")
+        await channel.send(
+            f"Message from {message.author.mention}:\n{message.content}",
+            allowed_mentions=discord.AllowedMentions.none(),
+        )
         await message.reply(
             "Thank you for your message. A mod will contact you shortly."
         )

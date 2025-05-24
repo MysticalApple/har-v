@@ -19,4 +19,8 @@ A verification system for a school Discord server.
 
 `user_contact_channel`: ID of Discord channel accessible to unverified users
 
+`mod_contact_channel`: ID of Discord channel used to communicate with moderators (most likely same channel as webhook)
+
+`mod_role`: ID of moderator role
+
 `verified_role`: ID of verification role in `guild`

@@ -16,6 +16,18 @@ def setup(bot_client: discord.Client, bot_logger: logging.Logger):
     logger = bot_logger
 
 
+def get_guild() -> discord.Guild:
+    """
+    Gets the guild associated with this bot.
+    """
+    guild = client.get_guild(config.get("guild"))
+    if guild is None:
+        logger.error("Could not find guild.")
+        raise discord.ClientException
+
+    return guild
+
+
 async def welcome(member: discord.User | discord.Member):
     """
     Send verification instructions to new server member.
@@ -51,30 +63,45 @@ async def verify(form_data: list[str]):
     name = name.title()
     school = school.title()
 
-    if not email.endswith("@pausd.us"):
-        # TODO: Non-PAUSD
-        logger.warning("Non-PAUSD email used.")
-        return
-
-    guild = client.get_guild(config.get("guild"))
-    if guild is None:
-        logger.error("Could not find guild.")
-        raise discord.ClientException
-
+    guild = get_guild()
     member = guild.get_member(user_id)
     if member is None:
-        # TODO: NOT IN SERVER
-        logger.warning("User ID invalid (user not in server or non-existent).")
+        await notify_mods(
+            f"Issue with submission:\nUser ID `{user_id}` is invalid.",
+        )
+        return
+
+    if not email.endswith("@pausd.us"):
+        await notify_mods(
+            f"Issue with submission from {member.mention}:\nEmail address `{email}` may be invalid.",
+        )
+        await notify_user(
+            member,
+            "Your verification form submission contains unexpected data and requires manual"
+            " verification. A mod will be in contact shortly.",
+        )
         return
 
     if year not in [role.name for role in guild.roles]:
-        # TODO: YEAR ROLE DOES NOT EXIST
-        logger.warning(f"No role for year {year}.")
+        await notify_mods(
+            f"Issue with submission from {member.mention}:\nNo role exists for year `{year}`.",
+        )
+        await notify_user(
+            member,
+            "Your verification form submission contains unexpected data and requires manual"
+            " verification. A mod will be in contact shortly.",
+        )
         return
 
     if school not in ["Gunn", "Paly"]:
-        # TODO: UNKNOWN SCHOOL
-        logger.warning("Unknown school.")
+        await notify_mods(
+            f"Issue with submission from {member.mention}:\nSchool `{school}` may be invalid.",
+        )
+        await notify_user(
+            member,
+            "Your verification form submission contains unexpected data and requires manual "
+            "verification. A mod will be in contact shortly.",
+        )
         return
 
     # TODO: Add user to verification db
@@ -82,11 +109,47 @@ async def verify(form_data: list[str]):
     await add_roles(member, year)
 
 
+async def notify_mods(message: str, urgent: bool = True):
+    if urgent:
+        logger.warning(message)
+    else:
+        logger.info(message)
+
+    channel = await client.fetch_channel(config.get("mod_contact_channel"))
+    if not isinstance(channel, discord.TextChannel):
+        logger.error("Invalid mod_contact_channel.")
+        raise discord.ClientException
+
+    role = get_guild().get_role(config.get("mod_role"))
+    if role is None:
+        logger.error("Invalid mod_role.")
+        raise discord.ClientException
+
+    await channel.send(
+        f"{role.mention if urgent else ''} {message}",
+        allowed_mentions=discord.AllowedMentions.all(),
+    )
+
+
+async def notify_user(user: discord.User | discord.Member, message: str):
+    """
+    Attempts to DM a user.
+    Returns whether or not the DM was sent successfully.
+    """
+    try:
+        await user.send(message)
+        return True
+    except discord.Forbidden:
+        await notify_mods(
+            f"User {user.name} with id {user.id} has DMs disabled.", urgent=False
+        )
+        return False
+
+
 async def add_roles(member: discord.Member, year: str):
     """
     Gives a member verification roles, granting access to server.
     """
-    logger.info(f"Verifying {member.name} with year {year}.")
     verified_role = member.guild.get_role(config.get("verified_role"))
     if verified_role is None:
         logger.error("Verification role not found.")
@@ -98,3 +161,5 @@ async def add_roles(member: discord.Member, year: str):
         raise discord.ClientException
 
     await member.add_roles(verified_role, year_role, reason="Verified user")
+    await notify_mods(f"Verified {member.mention} with year {year}.", urgent=False)
+    await notify_user(member, "You have been successfully verified.")
