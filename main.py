@@ -1,6 +1,7 @@
 import logging
 
 import discord
+from discord.ext import commands
 
 import config
 import verification
@@ -10,48 +11,36 @@ log_handler.set_name("discord")
 logger = logging.getLogger("discord")
 intents = discord.Intents.all()
 
-client = discord.Client(intents=intents)
+bot = commands.Bot(command_prefix="v", intents=intents)
 
-verification.setup(client, logger)
+verification.setup(bot, logger)
 
 
-@client.event
+@bot.event
 async def on_ready():
-    logger.info(f"Logged in as {client.user}")
+    logger.info(f"Logged in as {bot.user}")
 
 
-@client.event
+@bot.event
 async def on_member_join(member: discord.Member):
     # TODO: Check if already verified
 
     await verification.welcome(member)
 
 
-@client.event
+@bot.event
 async def on_message(message: discord.Message):
-    assert client.user is not None
+    assert bot.user is not None
 
-    if message.content == "verifyme" and message.channel.id == config.get(
-        "user_contact_channel"
-    ):
-        await verification.welcome(message.author)
-        return
-
+    # New verification form submission
     if message.webhook_id == config.get("form_webhook"):
         form_data = message.content.splitlines()
         await verification.verify(form_data)
         return
 
-    if message.content.startswith("verifytest"):
-        await verification.verify(message.content.splitlines()[1:])
-        return
-
     # Relay DMs to mod channel (does not work with non-text content)
-    if (
-        isinstance(message.channel, discord.DMChannel)
-        and message.author.id != client.user.id
-    ):
-        channel = await client.fetch_channel(config.get("mod_contact_channel"))
+    if isinstance(message.channel, discord.DMChannel) and message.author != bot.user:
+        channel = await bot.fetch_channel(config.get("mod_contact_channel"))
         if not isinstance(channel, discord.TextChannel):
             logger.error("Invalid mod contact channel id.")
             raise discord.ClientException
@@ -65,5 +54,40 @@ async def on_message(message: discord.Message):
         )
         return
 
+    # Necessary because we override the default on_message
+    await bot.process_commands(message)
 
-client.run(config.get("token"), log_handler=log_handler)
+
+@bot.event
+async def on_command_error(ctx, error):
+    ignored_errors = (
+        commands.CommandNotFound,
+        commands.UserInputError,
+        commands.CheckFailure,
+    )
+    if isinstance(error, ignored_errors):
+        return
+
+    return error
+
+
+@bot.command(name="erifyme")  # Prefix is v, so command is invoked with "verifyme"
+@commands.check(lambda ctx: ctx.channel.id == config.get("user_contact_channel"))
+async def verifyme(ctx):
+    """
+    Begin the verification process.
+    """
+    await verification.welcome(ctx.author)
+
+
+@bot.command()
+@commands.has_role(config.get("mod_role"))
+async def test(ctx, *, data):
+    """
+    Test the verification system.
+    Parameters should follow the same format as the webhook.
+    """
+    await verification.verify(data.splitlines())
+
+
+bot.run(config.get("token"), log_handler=log_handler)

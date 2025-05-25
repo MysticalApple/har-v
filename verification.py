@@ -1,18 +1,19 @@
 import logging
 import discord
+from discord.ext import commands
 
 import config
 
 logger: logging.Logger
-client: discord.Client
+bot: commands.Bot
 
 
-def setup(bot_client: discord.Client, bot_logger: logging.Logger):
+def setup(bot_bot: commands.Bot, bot_logger: logging.Logger):
     """
     Set globals.
     """
-    global client, logger, guild
-    client = bot_client
+    global bot, logger, guild
+    bot = bot_bot
     logger = bot_logger
 
 
@@ -20,7 +21,7 @@ def get_guild() -> discord.Guild:
     """
     Gets the guild associated with this bot.
     """
-    guild = client.get_guild(config.get("guild"))
+    guild = bot.get_guild(config.get("guild"))
     if guild is None:
         logger.error("Could not find guild.")
         raise discord.ClientException
@@ -41,7 +42,7 @@ async def welcome(member: discord.User | discord.Member):
         )
 
     except discord.errors.Forbidden:
-        channel = client.get_channel(config.get("user_contact_channel"))
+        channel = bot.get_channel(config.get("user_contact_channel"))
 
         if not isinstance(channel, discord.TextChannel):
             raise TypeError
@@ -115,7 +116,7 @@ async def notify_mods(message: str, urgent: bool = True):
     else:
         logger.info(message)
 
-    channel = await client.fetch_channel(config.get("mod_contact_channel"))
+    channel = await bot.fetch_channel(config.get("mod_contact_channel"))
     if not isinstance(channel, discord.TextChannel):
         logger.error("Invalid mod_contact_channel.")
         raise discord.ClientException
