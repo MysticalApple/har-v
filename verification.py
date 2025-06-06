@@ -3,18 +3,19 @@ import discord
 from discord.ext import commands
 
 import config
+from user_db import get_db
 
 logger: logging.Logger
 bot: commands.Bot
 
 
-def setup(bot_bot: commands.Bot, bot_logger: logging.Logger):
+def setup(v_bot: commands.Bot, v_logger: logging.Logger):
     """
     Set globals.
     """
-    global bot, logger, guild
-    bot = bot_bot
-    logger = bot_logger
+    global bot, logger
+    bot = v_bot
+    logger = v_logger
 
 
 def get_guild() -> discord.Guild:
@@ -63,6 +64,7 @@ async def verify(form_data: list[str]):
     user_id = int(user_id)
     name = name.title()
     school = school.title()
+    timestamp = int(timestamp)
 
     guild = get_guild()
     member = guild.get_member(user_id)
@@ -105,7 +107,7 @@ async def verify(form_data: list[str]):
         )
         return
 
-    # TODO: Add user to verification db
+    get_db().add_user(user_id, name, school, int(year), email, timestamp)
 
     await add_roles(member, year)
 
