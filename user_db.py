@@ -50,7 +50,7 @@ class UserDB:
                 """
                 INSERT INTO users (user_id, name, school, year, email, join_date)
                 VALUES (?, ?, ?, ?, ?, ?);
-            """,
+                """,
                 (user_id, name, school, year, email, join_date),
             )
             conn.commit()
@@ -74,7 +74,7 @@ class UserDB:
                 """
                 INSERT INTO alts (alt_id, owner_id)
                 VALUES (?, ?);
-            """,
+                """,
                 (alt_id, owner_id),
             )
             conn.commit()

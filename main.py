@@ -5,6 +5,7 @@ from discord.ext import commands
 
 import config
 import verification
+from user_db import get_db
 
 log_handler = logging.FileHandler(filename="bot.log", encoding="utf-8", mode="w")
 log_handler.set_name("discord")
@@ -23,9 +24,12 @@ async def on_ready():
 
 @bot.event
 async def on_member_join(member: discord.Member):
-    # TODO: Check if already verified
+    info = get_db().get_user(member.id)
+    if info is None:
+        await verification.welcome(member)
+        return
 
-    await verification.welcome(member)
+    await verification.add_roles(member, info["year"])
 
 
 @bot.event
@@ -50,7 +54,8 @@ async def on_message(message: discord.Message):
             allowed_mentions=discord.AllowedMentions.none(),
         )
         await message.reply(
-            "Thank you for your message. A mod will contact you shortly."
+            "Thank you for your message. A mod will contact you shortly.",
+            mention_author=False,
         )
         return
 
@@ -62,10 +67,13 @@ async def on_message(message: discord.Message):
 async def on_command_error(ctx, error):
     ignored_errors = (
         commands.CommandNotFound,
-        commands.UserInputError,
         commands.CheckFailure,
     )
     if isinstance(error, ignored_errors):
+        return
+
+    if isinstance(error, commands.UserInputError):
+        await ctx.reply(error, mention_author=False)
         return
 
     return error
@@ -88,6 +96,33 @@ async def test(ctx, *, data):
     Parameters should follow the same format as the webhook.
     """
     await verification.verify(data.splitlines())
+
+
+@bot.command()
+@commands.has_role(config.get("mod_role"))
+async def addalt(ctx, alt: discord.Member, owner: discord.User):
+    """
+    Verify an alt account for a user.
+    """
+    try:
+        get_db().add_alt(alt.id, owner.id)
+    except ValueError as e:
+        await ctx.reply(e, mention_author=False)
+        return
+
+    info = get_db().get_user(alt.id)
+    if info is None:
+        await verification.notify_mods(
+            f"No info associated with alt account {alt.mention}.", urgent=True
+        )
+        return
+
+    await verification.add_roles(alt, str(info["year"]))
+    await ctx.message.add_reaction("✅")
+
+    await verification.notify_user(
+        owner, f"{alt.mention} was successfully added as your alt."
+    )
 
 
 bot.run(config.get("token"), log_handler=log_handler)
