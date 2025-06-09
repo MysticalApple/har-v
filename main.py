@@ -100,6 +100,23 @@ async def test(ctx, *, data):
 
 @bot.command()
 @commands.has_role(config.get("mod_role"))
+async def getuser(ctx, user: discord.User):
+    """
+    Get the verification info associated with a user.
+    """
+    info = get_db().get_user(user.id)
+
+    if info is None:
+        await ctx.message.reply(
+            f"No info associated with user {user.mention}.", mention_author=False
+        )
+        return
+
+    await ctx.message.reply(str(info), mention_author=False)
+
+
+@bot.command()
+@commands.has_role(config.get("mod_role"))
 async def addalt(ctx, alt: discord.Member, owner: discord.User):
     """
     Verify an alt account for a user.
