@@ -1,4 +1,5 @@
 import logging
+import datetime
 
 import discord
 from discord.ext import commands
@@ -89,13 +90,37 @@ async def verifyme(ctx):
 
 
 @bot.command()
-@commands.has_role(config.get("mod_role"))
+@commands.is_owner()
 async def test(ctx, *, data):
     """
     Test the verification system.
     Parameters should follow the same format as the webhook.
     """
     await verification.verify(data.splitlines())
+
+
+@bot.command()
+@commands.has_role(config.get("mod_role"))
+async def adduser(
+    ctx, member: discord.Member, name: str, school: str, year: int, email: str
+):
+    """
+    Add verification info to the database for a user. This command bypasses checks.
+    """
+    try:
+        get_db().add_user(
+            member.id,
+            name,
+            school,
+            year,
+            email,
+            int(datetime.datetime.now().timestamp()),
+        )
+    except Exception as e:
+        await ctx.message.reply(e, mention_author=False)
+    else:
+        await verification.add_roles(member, str(year))
+        await ctx.message.add_reaction("✅")
 
 
 @bot.command()
