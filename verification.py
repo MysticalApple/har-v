@@ -76,12 +76,11 @@ async def verify(form_data: list[str]):
 
     if not email.endswith("@pausd.us"):
         await notify_mods(
-            f"Issue with submission from {member.mention}:\nEmail address `{email}` may be invalid.",
+            f"Issue with submission from {member.mention}:\nEmail address `{email}` may be invalid. I have told the user to re-submit.",
         )
         await notify_user(
             member,
-            "Your verification form submission contains unexpected data and requires manual"
-            " verification. A mod will be in contact shortly.",
+            "You verified with a non-PAUSD email. Please re-submit the form from your PAUSD Google account.",
         )
         return
 
