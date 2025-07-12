@@ -19,7 +19,7 @@ class UserDB:
                     name TEXT NOT NULL,
                     school TEXT NOT NULL,
                     year INTEGER NOT NULL,
-                    email TEXT NOT NULL UNIQUE,
+                    email TEXT,
                     join_date INTEGER NOT NULL
                 );
             """)
