@@ -30,7 +30,7 @@ async def on_member_join(member: discord.Member):
         await verification.welcome(member)
         return
 
-    await verification.add_roles(member, info["year"])
+    await verification.add_roles(member, str(info["year"]))
 
 
 @bot.event
