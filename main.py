@@ -1,5 +1,9 @@
-import logging
+import contextlib
 import datetime
+import io
+import logging
+import textwrap
+import traceback
 
 import discord
 from discord.ext import commands
@@ -97,6 +101,40 @@ async def test(ctx, *, data):
     Parameters should follow the same format as the webhook.
     """
     await verification.verify(data.splitlines())
+
+
+@bot.command(name="exec")
+@commands.is_owner()
+async def execute(ctx, *, code):
+    """
+    Run python code.
+    """
+    if code.startswith("```") and code.endswith("```"):
+        code = "\n".join(code.split("\n")[1:][:-1])
+
+    local_variables = {"ctx": ctx}
+
+    stdout = io.StringIO()
+
+    global_variables = globals()
+    global_variables["ctx"] = ctx
+    local_variables = {}
+
+    try:
+        with contextlib.redirect_stdout(stdout):
+            exec(
+                f"async def func():\n{textwrap.indent(code, '    ')}",
+                global_variables,
+                local_variables,
+            )
+
+            await local_variables["func"]()
+            result = f"py\n‌{stdout.getvalue()}\n"
+
+    except Exception as _:
+        result = "".join(traceback.format_exc())
+
+    await ctx.send(f"```{result}```")
 
 
 @bot.command()
