@@ -40,7 +40,7 @@ class UserDB:
         name: str,
         school: str,
         year: int,
-        email: str,
+        email: str | None,
         join_date: int,
     ):
         """Add a real user."""

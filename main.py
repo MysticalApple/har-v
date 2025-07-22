@@ -140,7 +140,12 @@ async def execute(ctx, *, code):
 @bot.command()
 @commands.has_role(config.get("mod_role"))
 async def adduser(
-    ctx, member: discord.Member, name: str, school: str, year: int, email: str
+    ctx,
+    member: discord.Member,
+    name: str,
+    school: str,
+    year: int,
+    email: str | None = None,
 ):
     """
     Add verification info to the database for a user. This command bypasses checks.
