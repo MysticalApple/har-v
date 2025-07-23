@@ -95,6 +95,17 @@ class UserDB:
             user_row = c.fetchone()
             return dict(user_row) if user_row else None
 
+    def get_alts(self, user_id: int) -> list[int]:
+        """Retrieve a list of a user's alt accounts."""
+        with sqlite3.connect(self.db_path) as conn:
+            conn.row_factory = sqlite3.Row
+            c = conn.cursor()
+
+            c.execute("SELECT alt_id FROM alts WHERE owner_id = ?", (user_id,))
+            rows = c.fetchall()
+
+            return [row["alt_id"] for row in rows]
+
 
 # Singleton should be fine here...
 _db_instance = None

@@ -176,11 +176,35 @@ async def getuser(ctx, user: discord.User):
 
     if info is None:
         await ctx.message.reply(
-            f"No info associated with user {user.mention}.", mention_author=False
+            f"No info associated with user {user.mention}.",
+            allowed_mentions=discord.AllowedMentions.none(),
         )
         return
 
     await ctx.message.reply(str(info), mention_author=False)
+
+
+@bot.command()
+@commands.has_role(config.get("mod_role"))
+async def getalts(ctx, user: discord.User):
+    """
+    Lists a user's alt accounts.
+    """
+    info = get_db().get_user(user.id)
+    if info is None:
+        await ctx.message.reply(
+            f"No info associated with user {user.mention}.",
+            allowed_mentions=discord.AllowedMentions.none(),
+        )
+        return
+
+    alts = get_db().get_alts(info["user_id"])
+    alts_mentions = "\n".join([f"<@{id}>" for id in alts])
+
+    await ctx.message.reply(
+        f"User <@{info['user_id']}> ({info['name']}) has {len(alts)} alts:\n{alts_mentions}",
+        allowed_mentions=discord.AllowedMentions.none(),
+    )
 
 
 @bot.command()
