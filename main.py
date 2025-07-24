@@ -34,7 +34,7 @@ async def on_member_join(member: discord.Member):
         await verification.welcome(member)
         return
 
-    await verification.add_roles(member, str(info["year"]))
+    await verification.add_roles(member, info["year"])
 
 
 @bot.event
@@ -162,7 +162,7 @@ async def adduser(
     except Exception as e:
         await ctx.message.reply(e, mention_author=False)
     else:
-        await verification.add_roles(member, str(year))
+        await verification.add_roles(member, year)
         await ctx.message.add_reaction("✅")
 
 
@@ -226,7 +226,7 @@ async def addalt(ctx, alt: discord.Member, owner: discord.User):
         )
         return
 
-    await verification.add_roles(alt, str(info["year"]))
+    await verification.add_roles(alt, info["year"])
     await ctx.message.add_reaction("✅")
 
     await verification.notify_user(

@@ -148,7 +148,7 @@ async def notify_user(user: discord.User | discord.Member, message: str):
         return False
 
 
-async def add_roles(member: discord.Member, year: str):
+async def add_roles(member: discord.Member, year: str | int):
     """
     Gives a member verification roles, granting access to server.
     """
@@ -157,6 +157,8 @@ async def add_roles(member: discord.Member, year: str):
         logger.error("Verification role not found.")
         raise discord.ClientException
 
+    # add_roles may be called with int or str year, but role.name is always str
+    year = str(year)
     year_role = next((role for role in member.guild.roles if role.name == year), None)
     if year_role is None:
         logger.error(f"No role for year {year}.")
