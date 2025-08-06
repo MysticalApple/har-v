@@ -106,6 +106,33 @@ class UserDB:
 
             return [row["alt_id"] for row in rows]
 
+    def set_main(self, alt_id: int, owner_id: int):
+        """Set alt_id as the main account for current owner_id."""
+        with sqlite3.connect(self.db_path) as conn:
+            c = conn.cursor()
+            # Swap out main for alt
+            c.execute(
+                "UPDATE users SET user_id = ? WHERE user_id = ?;",
+                (alt_id, owner_id),
+            )
+            # Delete alt
+            c.execute("DELETE FROM alts WHERE alt_id = ?", (alt_id,))
+            # Update owner reference
+            c.execute(
+                "UPDATE alts SET owner_id = ? WHERE owner_id = ?",
+                (alt_id, owner_id),
+            )
+            # Re-add old main as an alt
+            c.execute(
+                """
+                INSERT INTO alts (alt_id, owner_id)
+                VALUES (?, ?);
+                """,
+                (owner_id, alt_id),
+            )
+
+            conn.commit()
+
 
 # Singleton should be fine here...
 _db_instance = None

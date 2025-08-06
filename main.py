@@ -234,4 +234,33 @@ async def addalt(ctx, alt: discord.Member, owner: discord.User):
     )
 
 
+@bot.command()
+@commands.has_role(config.get("mod_role"))
+async def setmain(ctx, alt: discord.User):
+    """
+    Set a user as the main (primary) account for a person.
+    """
+    info = get_db().get_user(alt.id)
+    if info is None:
+        await ctx.message.reply(
+            f"No info associated with user {alt.mention}.",
+            allowed_mentions=discord.AllowedMentions.none(),
+        )
+        return
+    if info["user_id"] == alt.id:
+        await ctx.message.reply(
+            f"User {alt.mention} is already the main account for {info['name']}.",
+            allowed_mentions=discord.AllowedMentions.none(),
+        )
+        return
+
+    try:
+        get_db().set_main(alt.id, info["user_id"])
+    except Exception as e:
+        await ctx.reply(e, mention_author=False)
+        return
+
+    await ctx.message.add_reaction("✅")
+
+
 bot.run(config.get("token"), log_handler=log_handler)
